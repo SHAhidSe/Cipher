@@ -1,12 +1,15 @@
-import { AnyAction, createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit'
-import { generateKey } from "../../../util/aesEncryption";
+import {  createAsyncThunk, createSlice } from '@reduxjs/toolkit'
+import { encryptData, generateKey } from "../../../util/aesEncryption";
 // Define a type for the slice state
 interface EncryptionState {
     keyString: string,
     encString: string,
     isKeyLoading: boolean,
     isKeySuccess: boolean,
-    keys: string
+    keys: string,
+    isCipherLoading:boolean,
+    isCipherSuccess:boolean,
+    Cipher:string|undefined
 }
 
 // Define the initial state using that type
@@ -15,7 +18,10 @@ const initialState: EncryptionState = {
     encString: '',
     isKeyLoading: false,
     isKeySuccess: false,
-    keys: ''
+    keys: '',
+    isCipherLoading:false,
+    isCipherSuccess:false,
+    Cipher:''
 }
 export const EncryptionSlice = createSlice({
     name: 'encryption',
@@ -27,7 +33,8 @@ export const EncryptionSlice = createSlice({
         },
         setEncryptionText: (state, action) => {
             state.encString = action.payload
-        }
+        },
+
     },
     extraReducers: (builder) => {
         builder.addCase(generateKeyThunk.fulfilled, (state, { payload }) => {
@@ -42,6 +49,18 @@ export const EncryptionSlice = createSlice({
         builder.addCase(generateKeyThunk.pending, (state, action) => {
             state.isKeyLoading = true
         })
+        builder.addCase(generateCipherThunk.fulfilled, (state, { payload }) => {
+            state.isCipherLoading = false
+            state.isCipherSuccess = true
+            state.Cipher = payload.ciphertext
+        })
+        builder.addCase(generateCipherThunk.rejected, (state, action) => {
+            state.isCipherLoading = false
+            state.isCipherSuccess = false
+        })
+        builder.addCase(generateCipherThunk.pending, (state, action) => {
+            state.isCipherLoading = true
+        })
     },
 })
 export const generateKeyThunk = createAsyncThunk('key/generate', async (arg: { password: string, salt: string, cost: number, length: number }, thunkApi) => {
@@ -49,6 +68,19 @@ export const generateKeyThunk = createAsyncThunk('key/generate', async (arg: { p
         const response = await generateKey(arg.password, arg.salt, arg.cost, arg.length)
         console.log(response)
         return 'response' as string
+    } catch (error) {
+        console.log(error)
+        return thunkApi.rejectWithValue(error)
+    }
+
+})
+
+/* generate cipher thunk */
+export const generateCipherThunk = createAsyncThunk('cipher/generate', async (arg:{key:string,text:string} , thunkApi) => {
+    try {
+        const response =  encryptData(arg.key,arg.text)
+       
+        return response
     } catch (error) {
         console.log(error)
         return thunkApi.rejectWithValue(error)

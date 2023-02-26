@@ -1,11 +1,13 @@
 import { configureStore } from '@reduxjs/toolkit'
+import DecryptionSlice from '../Features/Encryption/DecryptionSlice'
 import EncryptionSlice from '../Features/Encryption/EncryptionSlice'
 import splashSlice from '../Features/Splash/splashSlice'
 
 export const store = configureStore({
   reducer: {
     splash:splashSlice,
-    encryption:EncryptionSlice
+    encryption:EncryptionSlice,
+    decryption:DecryptionSlice
   },
 })
 
